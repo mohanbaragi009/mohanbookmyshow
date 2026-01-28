@@ -1,0 +1,4 @@
+project_id = "fdmonoxxleilfasnggye"
+
+[functions.update-movie-availability]
+verify_jwt = false

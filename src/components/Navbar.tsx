@@ -1,12 +1,27 @@
-import { Search, MapPin, Menu, X } from "lucide-react";
+import { Search, MapPin, Menu, X, Ticket, LogOut, User } from "lucide-react";
 import { useState } from "react";
+import { Link, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { useAuth } from "@/contexts/AuthContext";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 
 const Navbar = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
+  const { user, signOut } = useAuth();
+  const navigate = useNavigate();
 
+  const handleSignOut = async () => {
+    await signOut();
+    navigate('/');
+  };
   return (
     <nav className="sticky top-0 z-50 bg-background/95 backdrop-blur-md border-b border-border">
       <div className="container mx-auto px-4">
@@ -43,10 +58,34 @@ const Navbar = () => {
               <span>Mumbai</span>
             </button>
 
-            {/* Sign In Button */}
-            <Button variant="default" size="sm" className="hidden sm:flex">
-              Sign In
-            </Button>
+            {/* Auth Section */}
+            {user ? (
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="outline" size="sm" className="hidden sm:flex gap-2">
+                    <User className="h-4 w-4" />
+                    <span className="max-w-[100px] truncate">{user.email?.split('@')[0]}</span>
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end" className="w-48">
+                  <DropdownMenuItem asChild>
+                    <Link to="/my-bookings" className="flex items-center gap-2 cursor-pointer">
+                      <Ticket className="h-4 w-4" />
+                      My Bookings
+                    </Link>
+                  </DropdownMenuItem>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem onClick={handleSignOut} className="flex items-center gap-2 cursor-pointer text-destructive">
+                    <LogOut className="h-4 w-4" />
+                    Sign Out
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+            ) : (
+              <Button variant="default" size="sm" className="hidden sm:flex" asChild>
+                <Link to="/auth">Sign In</Link>
+              </Button>
+            )}
 
             {/* Mobile Menu Button */}
             <button
@@ -80,9 +119,24 @@ const Navbar = () => {
                 <MapPin className="h-4 w-4" />
                 <span>Mumbai</span>
               </button>
-              <Button variant="default" size="sm" className="w-full">
-                Sign In
-              </Button>
+              {user ? (
+                <>
+                  <Button variant="outline" size="sm" className="w-full" asChild>
+                    <Link to="/my-bookings">
+                      <Ticket className="h-4 w-4 mr-2" />
+                      My Bookings
+                    </Link>
+                  </Button>
+                  <Button variant="destructive" size="sm" className="w-full" onClick={handleSignOut}>
+                    <LogOut className="h-4 w-4 mr-2" />
+                    Sign Out
+                  </Button>
+                </>
+              ) : (
+                <Button variant="default" size="sm" className="w-full" asChild>
+                  <Link to="/auth">Sign In</Link>
+                </Button>
+              )}
             </div>
           </div>
         )}

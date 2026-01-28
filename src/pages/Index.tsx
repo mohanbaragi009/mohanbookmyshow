@@ -1,29 +1,36 @@
 import Navbar from "@/components/Navbar";
 import HeroBanner from "@/components/HeroBanner";
-import MovieCarousel from "@/components/MovieCarousel";
+import MovieCarouselDB from "@/components/MovieCarouselDB";
 import Footer from "@/components/Footer";
-import { nowShowingMovies, upcomingMovies } from "@/data/movies";
+import { useNowShowingMovies, useUpcomingMovies } from "@/hooks/useMovies";
 
 const Index = () => {
+  const { data: nowShowingMovies, isLoading: nowShowingLoading } = useNowShowingMovies();
+  const { data: upcomingMovies, isLoading: upcomingLoading } = useUpcomingMovies();
+
   return (
     <div className="min-h-screen bg-background">
       <Navbar />
       <main>
         <HeroBanner />
-        <MovieCarousel
+        <MovieCarouselDB
           title="Now Showing"
           subtitle="Book your tickets for the latest movies"
-          movies={nowShowingMovies}
+          movies={nowShowingMovies || []}
+          isLoading={nowShowingLoading}
         />
-        <MovieCarousel
+        <MovieCarouselDB
           title="Coming Soon"
           subtitle="Mark your calendars for these upcoming releases"
-          movies={upcomingMovies}
+          movies={upcomingMovies || []}
+          isLoading={upcomingLoading}
+          showBookButton={false}
         />
-        <MovieCarousel
+        <MovieCarouselDB
           title="Recommended For You"
           subtitle="Based on your preferences"
-          movies={[...nowShowingMovies].reverse()}
+          movies={[...(nowShowingMovies || [])].reverse()}
+          isLoading={nowShowingLoading}
         />
       </main>
       <Footer />
