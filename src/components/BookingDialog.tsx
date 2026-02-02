@@ -8,12 +8,13 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
+import { Label } from '@/components/ui/label';
 import { toast } from '@/hooks/use-toast';
 import { useAuth } from '@/contexts/AuthContext';
 import { useCreateBooking, useMockPayment } from '@/hooks/useBookings';
 import { Movie } from '@/hooks/useMovies';
-import { Theater } from '@/hooks/useTheaters';
-import { ArrowLeft } from 'lucide-react';
+import { Theater, MovieShowtime } from '@/hooks/useTheaters';
+import { ArrowLeft, Ticket } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import TheaterSelection from './booking/TheaterSelection';
 import SeatSelection from './booking/SeatSelection';
@@ -26,7 +27,7 @@ interface BookingDialogProps {
   onOpenChange: (open: boolean) => void;
 }
 
-type BookingStep = 'theater' | 'seats' | 'payment' | 'success';
+type BookingStep = 'tickets' | 'theater' | 'seats' | 'payment' | 'success';
 
 const BookingDialog = ({ movie, open, onOpenChange }: BookingDialogProps) => {
   const { user } = useAuth();
@@ -34,18 +35,25 @@ const BookingDialog = ({ movie, open, onOpenChange }: BookingDialogProps) => {
   const createBooking = useCreateBooking();
   const mockPayment = useMockPayment();
 
-  const [step, setStep] = useState<BookingStep>('theater');
+  const [step, setStep] = useState<BookingStep>('tickets');
+  const [ticketCount, setTicketCount] = useState(1);
   const [selectedDate, setSelectedDate] = useState(format(new Date(), 'yyyy-MM-dd'));
   const [selectedTheater, setSelectedTheater] = useState<Theater | null>(null);
   const [selectedTime, setSelectedTime] = useState<string | null>(null);
-  const [seats, setSeats] = useState(1);
+  const [selectedShowtimeId, setSelectedShowtimeId] = useState<string | null>(null);
+  const [selectedSeatNumbers, setSelectedSeatNumbers] = useState<string[]>([]);
   const [bookingId, setBookingId] = useState<string | null>(null);
 
-  const totalAmount = movie.price * seats;
+  const totalAmount = movie.price * ticketCount;
 
-  const handleSelectShowtime = (theater: Theater, time: string) => {
+  const handleSelectShowtime = (theater: Theater, time: string, showtimeId?: string) => {
     setSelectedTheater(theater);
     setSelectedTime(time);
+    if (showtimeId) setSelectedShowtimeId(showtimeId);
+  };
+
+  const handleProceedToTheater = () => {
+    setStep('theater');
   };
 
   const handleProceedToSeats = () => {
@@ -57,6 +65,7 @@ const BookingDialog = ({ movie, open, onOpenChange }: BookingDialogProps) => {
       });
       return;
     }
+    setSelectedSeatNumbers([]); // Reset seat selection when going to seats
     setStep('seats');
   };
 
@@ -72,15 +81,26 @@ const BookingDialog = ({ movie, open, onOpenChange }: BookingDialogProps) => {
       return;
     }
 
-    if (!selectedTheater || !selectedTime) return;
+    if (!selectedTheater || !selectedTime || !selectedShowtimeId) return;
+
+    if (selectedSeatNumbers.length !== ticketCount) {
+      toast({
+        title: 'Select Seats',
+        description: `Please select exactly ${ticketCount} seat(s).`,
+        variant: 'destructive',
+      });
+      return;
+    }
 
     try {
       const booking = await createBooking.mutateAsync({
         movie_id: movie.id,
-        seats,
+        seats: ticketCount,
+        seat_numbers: selectedSeatNumbers,
         total_amount: totalAmount,
         show_date: selectedDate,
         show_time: selectedTime,
+        showtime_id: selectedShowtimeId,
       });
 
       setBookingId(booking.id);
@@ -115,25 +135,30 @@ const BookingDialog = ({ movie, open, onOpenChange }: BookingDialogProps) => {
   };
 
   const handleClose = () => {
-    setStep('theater');
-    setSeats(1);
+    setStep('tickets');
+    setTicketCount(1);
     setBookingId(null);
     setSelectedTheater(null);
     setSelectedTime(null);
+    setSelectedShowtimeId(null);
+    setSelectedSeatNumbers([]);
     onOpenChange(false);
   };
 
   const handleBack = () => {
-    if (step === 'seats') setStep('theater');
+    if (step === 'theater') setStep('tickets');
+    else if (step === 'seats') setStep('theater');
     else if (step === 'payment') setStep('seats');
   };
 
   const getDialogTitle = () => {
     switch (step) {
+      case 'tickets':
+        return 'How Many Tickets?';
       case 'theater':
-        return 'Book Tickets';
+        return 'Select Theater & Showtime';
       case 'seats':
-        return 'Select Seats';
+        return 'Select Your Seats';
       case 'payment':
         return 'Complete Payment';
       case 'success':
@@ -143,10 +168,12 @@ const BookingDialog = ({ movie, open, onOpenChange }: BookingDialogProps) => {
 
   const getDialogDescription = () => {
     switch (step) {
+      case 'tickets':
+        return `Choose the number of tickets for ${movie.title}`;
       case 'theater':
         return 'Choose your preferred theater and showtime';
       case 'seats':
-        return 'Select the number of seats for your booking';
+        return `Select ${ticketCount} seat${ticketCount > 1 ? 's' : ''} from the theater layout`;
       case 'payment':
         return 'Complete your payment to confirm booking';
       case 'success':
@@ -156,10 +183,10 @@ const BookingDialog = ({ movie, open, onOpenChange }: BookingDialogProps) => {
 
   return (
     <Dialog open={open} onOpenChange={handleClose}>
-      <DialogContent className="sm:max-w-[550px] bg-card max-h-[90vh] overflow-y-auto">
+      <DialogContent className="sm:max-w-[600px] bg-card max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <div className="flex items-center gap-2">
-            {(step === 'seats' || step === 'payment') && (
+            {(step === 'theater' || step === 'seats' || step === 'payment') && (
               <Button
                 variant="ghost"
                 size="icon"
@@ -177,6 +204,60 @@ const BookingDialog = ({ movie, open, onOpenChange }: BookingDialogProps) => {
         </DialogHeader>
 
         <div className="mt-4">
+          {/* Ticket Count Selection */}
+          {step === 'tickets' && (
+            <div className="space-y-6">
+              <div className="text-center">
+                <div className="inline-flex items-center justify-center w-20 h-20 rounded-full bg-primary/10 mb-4">
+                  <Ticket className="h-10 w-10 text-primary" />
+                </div>
+                <h3 className="font-semibold text-lg">{movie.title}</h3>
+                <p className="text-sm text-muted-foreground mt-1">₹{movie.price} per ticket</p>
+              </div>
+
+              <div className="space-y-2">
+                <Label className="flex items-center gap-2 justify-center">
+                  <Ticket className="h-4 w-4" />
+                  Number of Tickets
+                </Label>
+                <div className="flex items-center justify-center gap-4">
+                  <Button
+                    variant="outline"
+                    size="icon"
+                    onClick={() => setTicketCount(Math.max(1, ticketCount - 1))}
+                    disabled={ticketCount <= 1}
+                  >
+                    -
+                  </Button>
+                  <span className="text-3xl font-bold w-16 text-center">{ticketCount}</span>
+                  <Button
+                    variant="outline"
+                    size="icon"
+                    onClick={() => setTicketCount(Math.min(10, ticketCount + 1))}
+                    disabled={ticketCount >= 10 || ticketCount >= movie.available_seats}
+                  >
+                    +
+                  </Button>
+                </div>
+                <p className="text-sm text-muted-foreground text-center">
+                  Maximum 10 tickets per booking
+                </p>
+              </div>
+
+              <div className="bg-secondary/50 rounded-lg p-4">
+                <div className="flex justify-between items-center">
+                  <span className="text-muted-foreground">Total Amount</span>
+                  <span className="text-xl font-bold text-primary">₹{totalAmount.toFixed(2)}</span>
+                </div>
+              </div>
+
+              <Button className="w-full" onClick={handleProceedToTheater}>
+                Select Theater & Showtime
+              </Button>
+            </div>
+          )}
+
+          {/* Theater Selection */}
           {step === 'theater' && (
             <div className="space-y-4">
               <TheaterSelection
@@ -192,46 +273,50 @@ const BookingDialog = ({ movie, open, onOpenChange }: BookingDialogProps) => {
                 onClick={handleProceedToSeats}
                 disabled={!selectedTheater || !selectedTime}
               >
-                Continue
+                Select Seats
               </Button>
             </div>
           )}
 
-          {step === 'seats' && selectedTheater && selectedTime && (
+          {/* Seat Selection */}
+          {step === 'seats' && selectedTheater && selectedTime && selectedShowtimeId && (
             <SeatSelection
               movie={movie}
               theater={selectedTheater}
+              showtimeId={selectedShowtimeId}
               selectedDate={selectedDate}
               selectedTime={selectedTime}
-              seats={seats}
-              onSeatsChange={setSeats}
+              seats={ticketCount}
+              selectedSeatNumbers={selectedSeatNumbers}
+              onSeatNumbersChange={setSelectedSeatNumbers}
               totalAmount={totalAmount}
               onProceed={handleBookNow}
               isPending={createBooking.isPending}
-              maxSeats={movie.available_seats}
             />
           )}
 
+          {/* Payment */}
           {step === 'payment' && selectedTheater && selectedTime && (
             <PaymentStep
               movie={movie}
               theater={selectedTheater}
               selectedDate={selectedDate}
               selectedTime={selectedTime}
-              seats={seats}
+              seats={ticketCount}
               totalAmount={totalAmount}
               onPay={handlePayment}
               isPending={mockPayment.isPending}
             />
           )}
 
+          {/* Success */}
           {step === 'success' && selectedTheater && selectedTime && (
             <SuccessStep
               movie={movie}
               theater={selectedTheater}
               selectedDate={selectedDate}
               selectedTime={selectedTime}
-              seats={seats}
+              seats={ticketCount}
               onClose={handleClose}
             />
           )}

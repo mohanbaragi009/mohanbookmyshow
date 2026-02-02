@@ -14,11 +14,51 @@ export type Database = {
   }
   public: {
     Tables: {
+      booked_seats: {
+        Row: {
+          booking_id: string | null
+          created_at: string
+          id: string
+          movie_showtime_id: string
+          seat_number: string
+        }
+        Insert: {
+          booking_id?: string | null
+          created_at?: string
+          id?: string
+          movie_showtime_id: string
+          seat_number: string
+        }
+        Update: {
+          booking_id?: string | null
+          created_at?: string
+          id?: string
+          movie_showtime_id?: string
+          seat_number?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "booked_seats_booking_id_fkey"
+            columns: ["booking_id"]
+            isOneToOne: false
+            referencedRelation: "bookings"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "booked_seats_movie_showtime_id_fkey"
+            columns: ["movie_showtime_id"]
+            isOneToOne: false
+            referencedRelation: "movie_showtimes"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       bookings: {
         Row: {
           created_at: string
           id: string
           movie_id: string
+          seat_numbers: string[] | null
           seats: number
           show_date: string
           show_time: string
@@ -31,6 +71,7 @@ export type Database = {
           created_at?: string
           id?: string
           movie_id: string
+          seat_numbers?: string[] | null
           seats?: number
           show_date: string
           show_time: string
@@ -43,6 +84,7 @@ export type Database = {
           created_at?: string
           id?: string
           movie_id?: string
+          seat_numbers?: string[] | null
           seats?: number
           show_date?: string
           show_time?: string
