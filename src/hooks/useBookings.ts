@@ -7,6 +7,7 @@ export interface Booking {
   user_id: string;
   movie_id: string;
   seats: number;
+  seat_numbers: string[];
   total_amount: number;
   status: 'pending' | 'confirmed' | 'paid' | 'cancelled';
   show_date: string;
@@ -18,9 +19,11 @@ export interface Booking {
 export interface CreateBookingInput {
   movie_id: string;
   seats: number;
+  seat_numbers: string[];
   total_amount: number;
   show_date: string;
   show_time: string;
+  showtime_id: string;
 }
 
 export const useBookings = () => {
@@ -52,12 +55,14 @@ export const useCreateBooking = () => {
     mutationFn: async (input: CreateBookingInput) => {
       if (!user) throw new Error('You must be logged in to book');
 
-      const { data, error } = await supabase
+      // Create the booking first
+      const { data: booking, error: bookingError } = await supabase
         .from('bookings')
         .insert({
           user_id: user.id,
           movie_id: input.movie_id,
           seats: input.seats,
+          seat_numbers: input.seat_numbers,
           total_amount: input.total_amount,
           show_date: input.show_date,
           show_time: input.show_time,
@@ -66,11 +71,32 @@ export const useCreateBooking = () => {
         .select()
         .single();
 
-      if (error) throw error;
-      return data as Booking;
+      if (bookingError) throw bookingError;
+
+      // Book the seats in the booked_seats table
+      if (input.seat_numbers.length > 0) {
+        const seatInserts = input.seat_numbers.map(seat => ({
+          movie_showtime_id: input.showtime_id,
+          seat_number: seat,
+          booking_id: booking.id,
+        }));
+
+        const { error: seatsError } = await supabase
+          .from('booked_seats')
+          .insert(seatInserts);
+
+        if (seatsError) {
+          // Rollback booking if seat reservation fails
+          await supabase.from('bookings').delete().eq('id', booking.id);
+          throw seatsError;
+        }
+      }
+
+      return booking as Booking;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['bookings'] });
+      queryClient.invalidateQueries({ queryKey: ['booked-seats'] });
     },
   });
 };

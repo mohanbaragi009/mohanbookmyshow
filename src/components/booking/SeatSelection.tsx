@@ -1,100 +1,70 @@
 import { format } from 'date-fns';
-import { Ticket, MapPin, Calendar, Clock, Loader2 } from 'lucide-react';
+import { MapPin, Calendar, Clock, Loader2, Armchair } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { Label } from '@/components/ui/label';
 import { Movie } from '@/hooks/useMovies';
 import { Theater } from '@/hooks/useTheaters';
+import SeatMap from './SeatMap';
 
 interface SeatSelectionProps {
   movie: Movie;
   theater: Theater;
+  showtimeId: string;
   selectedDate: string;
   selectedTime: string;
   seats: number;
-  onSeatsChange: (seats: number) => void;
+  selectedSeatNumbers: string[];
+  onSeatNumbersChange: (seats: string[]) => void;
   totalAmount: number;
   onProceed: () => void;
   isPending: boolean;
-  maxSeats: number;
 }
 
 const SeatSelection = ({
   movie,
   theater,
+  showtimeId,
   selectedDate,
   selectedTime,
   seats,
-  onSeatsChange,
+  selectedSeatNumbers,
+  onSeatNumbersChange,
   totalAmount,
   onProceed,
   isPending,
-  maxSeats,
 }: SeatSelectionProps) => {
+  const canProceed = selectedSeatNumbers.length === seats;
+
   return (
     <div className="space-y-6">
-      {/* Booking Summary */}
-      <div className="bg-secondary/50 rounded-lg p-4">
-        <h3 className="font-semibold mb-3 text-foreground">Your Selection</h3>
-        <div className="space-y-2 text-sm">
-          <div className="flex justify-between">
-            <span className="text-muted-foreground">Movie</span>
-            <span className="text-foreground font-medium">{movie.title}</span>
+      {/* Booking Summary Header */}
+      <div className="bg-secondary/50 rounded-lg p-3">
+        <div className="grid grid-cols-2 gap-2 text-sm">
+          <div className="flex items-center gap-2 text-muted-foreground">
+            <MapPin className="h-3 w-3" />
+            <span className="truncate">{theater.name}</span>
           </div>
-          <div className="flex justify-between">
-            <span className="text-muted-foreground flex items-center gap-1">
-              <MapPin className="h-3 w-3" />
-              Theater
-            </span>
-            <span className="text-foreground">{theater.name}</span>
+          <div className="flex items-center gap-2 text-muted-foreground">
+            <Calendar className="h-3 w-3" />
+            <span>{format(new Date(selectedDate), 'MMM d')}</span>
           </div>
-          <div className="flex justify-between">
-            <span className="text-muted-foreground flex items-center gap-1">
-              <Calendar className="h-3 w-3" />
-              Date
-            </span>
-            <span className="text-foreground">
-              {format(new Date(selectedDate), 'EEE, MMM d, yyyy')}
-            </span>
+          <div className="flex items-center gap-2 text-muted-foreground">
+            <Clock className="h-3 w-3" />
+            <span>{selectedTime}</span>
           </div>
-          <div className="flex justify-between">
-            <span className="text-muted-foreground flex items-center gap-1">
-              <Clock className="h-3 w-3" />
-              Time
-            </span>
-            <span className="text-foreground">{selectedTime}</span>
+          <div className="flex items-center gap-2 text-muted-foreground">
+            <Armchair className="h-3 w-3" />
+            <span>Select {seats} seat{seats > 1 ? 's' : ''}</span>
           </div>
         </div>
       </div>
 
-      {/* Seats Selection */}
-      <div className="space-y-2">
-        <Label className="flex items-center gap-2">
-          <Ticket className="h-4 w-4" />
-          Number of Seats
-        </Label>
-        <div className="flex items-center gap-4">
-          <Button
-            variant="outline"
-            size="icon"
-            onClick={() => onSeatsChange(Math.max(1, seats - 1))}
-            disabled={seats <= 1}
-          >
-            -
-          </Button>
-          <span className="text-2xl font-bold w-12 text-center">{seats}</span>
-          <Button
-            variant="outline"
-            size="icon"
-            onClick={() => onSeatsChange(Math.min(10, seats + 1))}
-            disabled={seats >= 10 || seats >= maxSeats}
-          >
-            +
-          </Button>
-          <span className="text-sm text-muted-foreground">
-            ({maxSeats} seats available)
-          </span>
-        </div>
-      </div>
+      {/* Seat Map */}
+      <SeatMap
+        showtimeId={showtimeId}
+        maxSeats={seats}
+        selectedSeats={selectedSeatNumbers}
+        onSeatSelect={onSeatNumbersChange}
+      />
 
       {/* Price Summary */}
       <div className="bg-secondary/50 rounded-lg p-4">
@@ -114,12 +84,18 @@ const SeatSelection = ({
         </div>
       </div>
 
-      <Button className="w-full" onClick={onProceed} disabled={isPending}>
+      <Button 
+        className="w-full" 
+        onClick={onProceed} 
+        disabled={!canProceed || isPending}
+      >
         {isPending ? (
           <>
             <Loader2 className="mr-2 h-4 w-4 animate-spin" />
             Processing...
           </>
+        ) : !canProceed ? (
+          `Select ${seats - selectedSeatNumbers.length} more seat${seats - selectedSeatNumbers.length > 1 ? 's' : ''}`
         ) : (
           'Proceed to Payment'
         )}

@@ -12,7 +12,7 @@ interface TheaterSelectionProps {
   onDateChange: (date: string) => void;
   selectedTheater: Theater | null;
   selectedTime: string | null;
-  onSelectShowtime: (theater: Theater, time: string) => void;
+  onSelectShowtime: (theater: Theater, time: string, showtimeId?: string) => void;
 }
 
 const TheaterSelection = ({
@@ -85,6 +85,7 @@ const TheaterSelection = ({
           showtimes.map((showtime) => (
             <TheaterCard
               key={showtime.id}
+              showtimeId={showtime.id}
               theater={showtime.theater}
               showTimes={showtime.show_times}
               priceMultiplier={showtime.price_multiplier}
@@ -111,16 +112,18 @@ const TheaterSelection = ({
 };
 
 interface TheaterCardProps {
+  showtimeId: string;
   theater: Theater;
   showTimes: string[];
   priceMultiplier: number;
   basePrice: number;
   selectedTheater: Theater | null;
   selectedTime: string | null;
-  onSelectShowtime: (theater: Theater, time: string) => void;
+  onSelectShowtime: (theater: Theater, time: string, showtimeId?: string) => void;
 }
 
 const TheaterCard = ({
+  showtimeId,
   theater,
   showTimes,
   priceMultiplier,
@@ -162,7 +165,7 @@ const TheaterCard = ({
           return (
             <button
               key={time}
-              onClick={() => onSelectShowtime(theater, time)}
+              onClick={() => onSelectShowtime(theater, time, showtimeId)}
               className={`px-4 py-2 rounded-lg text-sm border transition-all ${
                 isTimeSelected
                   ? 'border-primary bg-primary text-primary-foreground'
