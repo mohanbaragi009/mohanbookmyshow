@@ -61,6 +61,54 @@ export type Database = {
           },
         ]
       }
+      movie_showtimes: {
+        Row: {
+          available_seats: number | null
+          created_at: string
+          id: string
+          movie_id: string
+          price_multiplier: number | null
+          show_date: string
+          show_times: string[]
+          theater_id: string
+        }
+        Insert: {
+          available_seats?: number | null
+          created_at?: string
+          id?: string
+          movie_id: string
+          price_multiplier?: number | null
+          show_date: string
+          show_times?: string[]
+          theater_id: string
+        }
+        Update: {
+          available_seats?: number | null
+          created_at?: string
+          id?: string
+          movie_id?: string
+          price_multiplier?: number | null
+          show_date?: string
+          show_times?: string[]
+          theater_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "movie_showtimes_movie_id_fkey"
+            columns: ["movie_id"]
+            isOneToOne: false
+            referencedRelation: "movies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "movie_showtimes_theater_id_fkey"
+            columns: ["theater_id"]
+            isOneToOne: false
+            referencedRelation: "theaters"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       movies: {
         Row: {
           availability: Database["public"]["Enums"]["movie_availability"] | null
@@ -146,6 +194,33 @@ export type Database = {
           phone?: string | null
           updated_at?: string
           user_id?: string
+        }
+        Relationships: []
+      }
+      theaters: {
+        Row: {
+          amenities: string[] | null
+          city: string
+          created_at: string
+          id: string
+          location: string
+          name: string
+        }
+        Insert: {
+          amenities?: string[] | null
+          city?: string
+          created_at?: string
+          id?: string
+          location: string
+          name: string
+        }
+        Update: {
+          amenities?: string[] | null
+          city?: string
+          created_at?: string
+          id?: string
+          location?: string
+          name?: string
         }
         Relationships: []
       }
