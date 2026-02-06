@@ -34,15 +34,32 @@ const Footer = () => {
           <div className="col-span-2 md:col-span-3 lg:col-span-1">
             <h4 className="font-semibold text-foreground mb-4">Follow Us</h4>
             <div className="flex gap-4">
-              {[Facebook, Twitter, Instagram, Youtube].map((Icon, index) => (
-                <a
-                  key={index}
-                  href="#"
-                  className="w-10 h-10 rounded-full bg-secondary flex items-center justify-center text-muted-foreground hover:text-primary hover:bg-primary/10 transition-colors"
-                >
-                  <Icon className="h-5 w-5" />
-                </a>
-              ))}
+              <a
+                href="#"
+                className="w-10 h-10 rounded-full bg-secondary flex items-center justify-center text-muted-foreground hover:text-primary hover:bg-primary/10 transition-colors"
+              >
+                <Facebook className="h-5 w-5" />
+              </a>
+              <a
+                href="#"
+                className="w-10 h-10 rounded-full bg-secondary flex items-center justify-center text-muted-foreground hover:text-primary hover:bg-primary/10 transition-colors"
+              >
+                <Twitter className="h-5 w-5" />
+              </a>
+              <a
+                href="https://instagram.com/mohanreddy_009/"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="w-10 h-10 rounded-full bg-secondary flex items-center justify-center text-muted-foreground hover:text-primary hover:bg-primary/10 transition-colors"
+              >
+                <Instagram className="h-5 w-5" />
+              </a>
+              <a
+                href="#"
+                className="w-10 h-10 rounded-full bg-secondary flex items-center justify-center text-muted-foreground hover:text-primary hover:bg-primary/10 transition-colors"
+              >
+                <Youtube className="h-5 w-5" />
+              </a>
             </div>
           </div>
         </div>
@@ -51,12 +68,12 @@ const Footer = () => {
         <div className="border-t border-border mt-10 pt-6 flex flex-col sm:flex-row items-center justify-between gap-4">
           <div className="flex items-center gap-2">
             <div className="w-8 h-8 rounded-lg bg-primary flex items-center justify-center">
-              <span className="text-primary-foreground font-bold text-sm">B</span>
+              <span className="text-primary-foreground font-bold text-sm">M</span>
             </div>
-            <span className="font-bold text-foreground">BookMyShow</span>
+            <span className="font-bold text-foreground">MohanBookMyShow</span>
           </div>
           <p className="text-sm text-muted-foreground text-center">
-            © 2024 BookMyShow Clone. All rights reserved.
+            © 2024 MohanBookMyShow. All rights reserved.
           </p>
         </div>
       </div>
