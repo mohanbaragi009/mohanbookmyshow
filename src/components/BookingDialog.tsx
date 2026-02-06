@@ -303,6 +303,7 @@ const BookingDialog = ({ movie, open, onOpenChange }: BookingDialogProps) => {
               selectedDate={selectedDate}
               selectedTime={selectedTime}
               seats={ticketCount}
+              selectedSeatNumbers={selectedSeatNumbers}
               totalAmount={totalAmount}
               onPay={handlePayment}
               isPending={mockPayment.isPending}
