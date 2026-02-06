@@ -1,5 +1,5 @@
-import { useState } from 'react';
-import { format } from 'date-fns';
+import { useState, useRef } from 'react';
+import { format, addDays } from 'date-fns';
 import {
   Dialog,
   DialogContent,
@@ -14,7 +14,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { useCreateBooking, useMockPayment } from '@/hooks/useBookings';
 import { Movie } from '@/hooks/useMovies';
 import { Theater, MovieShowtime } from '@/hooks/useTheaters';
-import { ArrowLeft, Ticket } from 'lucide-react';
+import { ArrowLeft, Ticket, Calendar, ChevronLeft, ChevronRight } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import TheaterSelection from './booking/TheaterSelection';
 import SeatSelection from './booking/SeatSelection';
@@ -34,6 +34,7 @@ const BookingDialog = ({ movie, open, onOpenChange }: BookingDialogProps) => {
   const navigate = useNavigate();
   const createBooking = useCreateBooking();
   const mockPayment = useMockPayment();
+  const dateScrollRef = useRef<HTMLDivElement>(null);
 
   const [step, setStep] = useState<BookingStep>('tickets');
   const [ticketCount, setTicketCount] = useState(1);
@@ -45,6 +46,28 @@ const BookingDialog = ({ movie, open, onOpenChange }: BookingDialogProps) => {
   const [bookingId, setBookingId] = useState<string | null>(null);
 
   const totalAmount = movie.price * ticketCount;
+
+  // Generate next 14 days for date selection
+  const availableDates = Array.from({ length: 14 }, (_, i) => {
+    const date = addDays(new Date(), i);
+    return {
+      value: format(date, 'yyyy-MM-dd'),
+      dayName: format(date, 'EEE'),
+      day: format(date, 'd'),
+      month: format(date, 'MMM'),
+      isToday: i === 0,
+    };
+  });
+
+  const scrollDates = (direction: 'left' | 'right') => {
+    if (dateScrollRef.current) {
+      const scrollAmount = 200;
+      dateScrollRef.current.scrollBy({
+        left: direction === 'left' ? -scrollAmount : scrollAmount,
+        behavior: 'smooth',
+      });
+    }
+  };
 
   const handleSelectShowtime = (theater: Theater, time: string, showtimeId?: string) => {
     setSelectedTheater(theater);
@@ -151,10 +174,18 @@ const BookingDialog = ({ movie, open, onOpenChange }: BookingDialogProps) => {
     else if (step === 'payment') setStep('seats');
   };
 
+  const handleDateChange = (date: string) => {
+    setSelectedDate(date);
+    // Reset theater/time selection when date changes
+    setSelectedTheater(null);
+    setSelectedTime(null);
+    setSelectedShowtimeId(null);
+  };
+
   const getDialogTitle = () => {
     switch (step) {
       case 'tickets':
-        return 'How Many Tickets?';
+        return 'Book Tickets';
       case 'theater':
         return 'Select Theater & Showtime';
       case 'seats':
@@ -169,7 +200,7 @@ const BookingDialog = ({ movie, open, onOpenChange }: BookingDialogProps) => {
   const getDialogDescription = () => {
     switch (step) {
       case 'tickets':
-        return `Choose the number of tickets for ${movie.title}`;
+        return `Choose tickets and date for ${movie.title}`;
       case 'theater':
         return 'Choose your preferred theater and showtime';
       case 'seats':
@@ -204,55 +235,116 @@ const BookingDialog = ({ movie, open, onOpenChange }: BookingDialogProps) => {
         </DialogHeader>
 
         <div className="mt-4">
-          {/* Ticket Count Selection */}
+          {/* Ticket Count & Date Selection */}
           {step === 'tickets' && (
             <div className="space-y-6">
+              {/* Movie Info */}
               <div className="text-center">
-                <div className="inline-flex items-center justify-center w-20 h-20 rounded-full bg-primary/10 mb-4">
-                  <Ticket className="h-10 w-10 text-primary" />
+                <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-primary/10 mb-3">
+                  <Ticket className="h-8 w-8 text-primary" />
                 </div>
                 <h3 className="font-semibold text-lg">{movie.title}</h3>
                 <p className="text-sm text-muted-foreground mt-1">₹{movie.price} per ticket</p>
               </div>
 
-              <div className="space-y-2">
-                <Label className="flex items-center gap-2 justify-center">
-                  <Ticket className="h-4 w-4" />
-                  Number of Tickets
+              {/* Number of Seats */}
+              <div className="space-y-3">
+                <Label className="flex items-center gap-2 text-sm font-medium">
+                  <Ticket className="h-4 w-4 text-primary" />
+                  Number of Seats
                 </Label>
-                <div className="flex items-center justify-center gap-4">
+                <div className="flex items-center justify-center gap-4 bg-secondary/30 rounded-xl py-4">
                   <Button
                     variant="outline"
                     size="icon"
+                    className="h-10 w-10 rounded-full"
                     onClick={() => setTicketCount(Math.max(1, ticketCount - 1))}
                     disabled={ticketCount <= 1}
                   >
                     -
                   </Button>
-                  <span className="text-3xl font-bold w-16 text-center">{ticketCount}</span>
+                  <span className="text-4xl font-bold w-16 text-center text-primary">{ticketCount}</span>
                   <Button
                     variant="outline"
                     size="icon"
+                    className="h-10 w-10 rounded-full"
                     onClick={() => setTicketCount(Math.min(10, ticketCount + 1))}
                     disabled={ticketCount >= 10 || ticketCount >= movie.available_seats}
                   >
                     +
                   </Button>
                 </div>
-                <p className="text-sm text-muted-foreground text-center">
+                <p className="text-xs text-muted-foreground text-center">
                   Maximum 10 tickets per booking
                 </p>
               </div>
 
-              <div className="bg-secondary/50 rounded-lg p-4">
-                <div className="flex justify-between items-center">
-                  <span className="text-muted-foreground">Total Amount</span>
-                  <span className="text-xl font-bold text-primary">₹{totalAmount.toFixed(2)}</span>
+              {/* Horizontal Date Selection */}
+              <div className="space-y-3">
+                <Label className="flex items-center gap-2 text-sm font-medium">
+                  <Calendar className="h-4 w-4 text-primary" />
+                  Select Date
+                </Label>
+                <div className="relative">
+                  {/* Left scroll button */}
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="absolute left-0 top-1/2 -translate-y-1/2 z-10 h-8 w-8 bg-background/80 backdrop-blur-sm shadow-md rounded-full"
+                    onClick={() => scrollDates('left')}
+                  >
+                    <ChevronLeft className="h-4 w-4" />
+                  </Button>
+
+                  {/* Date row */}
+                  <div
+                    ref={dateScrollRef}
+                    className="flex gap-2 overflow-x-auto scrollbar-hide px-10 py-2 scroll-smooth"
+                    style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
+                  >
+                    {availableDates.map((date) => (
+                      <button
+                        key={date.value}
+                        onClick={() => handleDateChange(date.value)}
+                        className={`flex flex-col items-center px-4 py-3 rounded-xl text-sm min-w-[70px] transition-all duration-200 border-2 ${
+                          selectedDate === date.value
+                            ? 'bg-primary text-primary-foreground border-primary shadow-lg shadow-primary/30 scale-105'
+                            : 'bg-secondary/50 hover:bg-secondary border-transparent hover:border-primary/30'
+                        }`}
+                      >
+                        <span className={`text-xs font-medium ${selectedDate === date.value ? 'text-primary-foreground/80' : 'text-muted-foreground'}`}>
+                          {date.isToday ? 'Today' : date.dayName}
+                        </span>
+                        <span className="text-xl font-bold">{date.day}</span>
+                        <span className={`text-xs ${selectedDate === date.value ? 'text-primary-foreground/80' : 'text-muted-foreground'}`}>
+                          {date.month}
+                        </span>
+                      </button>
+                    ))}
+                  </div>
+
+                  {/* Right scroll button */}
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="absolute right-0 top-1/2 -translate-y-1/2 z-10 h-8 w-8 bg-background/80 backdrop-blur-sm shadow-md rounded-full"
+                    onClick={() => scrollDates('right')}
+                  >
+                    <ChevronRight className="h-4 w-4" />
+                  </Button>
                 </div>
               </div>
 
-              <Button className="w-full" onClick={handleProceedToTheater}>
-                Select Theater & Showtime
+              {/* Total Amount */}
+              <div className="bg-gradient-to-r from-primary/10 to-primary/5 rounded-xl p-4 border border-primary/20">
+                <div className="flex justify-between items-center">
+                  <span className="text-muted-foreground font-medium">Total Amount</span>
+                  <span className="text-2xl font-bold text-primary">₹{totalAmount.toFixed(2)}</span>
+                </div>
+              </div>
+
+              <Button className="w-full h-12 text-base font-semibold" onClick={handleProceedToTheater}>
+                View Available Shows
               </Button>
             </div>
           )}
