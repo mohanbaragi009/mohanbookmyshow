@@ -1,6 +1,7 @@
 import Navbar from "@/components/Navbar";
 import HeroBanner from "@/components/HeroBanner";
 import MovieCarouselDB from "@/components/MovieCarouselDB";
+import TheatersList from "@/components/TheatersList";
 import Footer from "@/components/Footer";
 import { useNowShowingMovies, useUpcomingMovies } from "@/hooks/useMovies";
 
@@ -32,6 +33,7 @@ const Index = () => {
           movies={[...(nowShowingMovies || [])].reverse()}
           isLoading={nowShowingLoading}
         />
+        <TheatersList />
       </main>
       <Footer />
     </div>
