@@ -1,6 +1,6 @@
 import { Search, MapPin, Menu, X, Ticket, LogOut, User } from "lucide-react";
 import { useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { Link, useNavigate, useLocation } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useAuth } from "@/contexts/AuthContext";
@@ -17,6 +17,7 @@ const Navbar = () => {
   const [searchQuery, setSearchQuery] = useState("");
   const { user, signOut } = useAuth();
   const navigate = useNavigate();
+  const location = useLocation();
 
   const handleSignOut = async () => {
     await signOut();
@@ -154,20 +155,31 @@ const Navbar = () => {
       <div className="border-t border-border bg-secondary/50">
         <div className="container mx-auto px-4">
           <div className="flex items-center gap-6 h-12 overflow-x-auto scrollbar-hide">
-            {["Movies", "Stream", "Events", "Plays", "Sports", "Activities"].map(
-              (category, index) => (
-                <button
-                  key={category}
+            {[
+              { name: "Movies", to: "/" },
+              { name: "Stream", to: "/browse?genre=Drama" },
+              { name: "Events", to: "/browse?genre=Action" },
+              { name: "Plays", to: "/browse?genre=Comedy" },
+              { name: "Sports", to: "/browse?genre=Thriller" },
+              { name: "Activities", to: "/browse?genre=Romance" },
+            ].map((cat) => {
+              const isActive =
+                (cat.to === "/" && location.pathname === "/") ||
+                (cat.to !== "/" && location.pathname + location.search === cat.to);
+              return (
+                <Link
+                  key={cat.name}
+                  to={cat.to}
                   className={`text-sm whitespace-nowrap transition-colors ${
-                    index === 0
+                    isActive
                       ? "text-primary font-semibold"
                       : "text-muted-foreground hover:text-foreground"
                   }`}
                 >
-                  {category}
-                </button>
-              )
-            )}
+                  {cat.name}
+                </Link>
+              );
+            })}
           </div>
         </div>
       </div>
