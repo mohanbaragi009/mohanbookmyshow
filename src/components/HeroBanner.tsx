@@ -1,7 +1,7 @@
 import { Play, Star } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import heroBanner from "@/assets/hero-banner.jpg";
+import heroBanner from "@/assets/hero-dhurandhar.jpg";
 
 const HeroBanner = () => {
   return (
@@ -10,7 +10,9 @@ const HeroBanner = () => {
       <div className="absolute inset-0">
         <img
           src={heroBanner}
-          alt="Featured Movie"
+          alt="Dhurandhar: The Revenge — Featured Movie"
+          width={1920}
+          height={1080}
           className="w-full h-full object-cover"
         />
         <div className="absolute inset-0 bg-gradient-to-r from-background via-background/80 to-transparent" />
@@ -22,31 +24,30 @@ const HeroBanner = () => {
         <div className="max-w-xl space-y-4 sm:space-y-6 animate-slide-in">
           {/* Badge */}
           <Badge variant="default" className="bg-primary/90">
-            Featured Today
+            Recently Added
           </Badge>
 
           {/* Title */}
           <h1 className="text-3xl sm:text-5xl lg:text-6xl font-bold text-foreground leading-tight">
-            Inception
+            Dhurandhar: The Revenge
           </h1>
 
           {/* Meta Info */}
           <div className="flex flex-wrap items-center gap-3 text-sm sm:text-base text-muted-foreground">
             <div className="flex items-center gap-1">
               <Star className="h-4 w-4 sm:h-5 sm:w-5 fill-primary text-primary" />
-              <span className="font-semibold text-foreground">8.8/10</span>
+              <span className="font-semibold text-foreground">8.6/10</span>
             </div>
             <span className="hidden sm:inline">•</span>
-            <span>2h 28m</span>
+            <span>3h 25m</span>
             <span>•</span>
-            <span>Action, Sci-Fi, Thriller</span>
+            <span>Action, Thriller, Crime</span>
           </div>
 
           {/* Description */}
           <p className="text-sm sm:text-base text-muted-foreground line-clamp-3 sm:line-clamp-none">
-            A thief who steals corporate secrets through the use of dream-sharing 
-            technology is given the inverse task of planting an idea into the mind 
-            of a C.E.O.
+            Over a decade-long mission, stoic yet lethal Hamza climbs the ranks
+            of Karachi's underworld to tear down a ruthless extremist network.
           </p>
 
           {/* CTA Buttons */}
